@@ -2,6 +2,6 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
-  base: "/<repository-name>/",  // <-- important
+  base: "/nexus-react-app/",  // <-- add leading and trailing slash
   plugins: [react()],
 });
