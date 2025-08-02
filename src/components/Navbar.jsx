@@ -4,7 +4,7 @@ function Navbar() {
       <div className="container-fluid">
         {/* Brand */}
         <a className="navbar-brand fw-bold fs-4 text-primary" href="#">
-          Nexus
+          Nexuss
         </a>
 
         {/* Mobile menu button */}
