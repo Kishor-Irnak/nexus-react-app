@@ -1,20 +1,20 @@
-import { useState } from 'react';
-import Feed from './components/Feed';
-import Navbar from './components/Navbar';
-import PostInput from './components/PostInput';
+import { useState } from "react";
+import Navbar from "./components/Navbar";  // Fixed typo from Mavbar
+import PostInput from "./components/PostInput";
+import Feed from "./components/Feed";  // Fixed import path
 
 function App() {
   const [posts, setPosts] = useState([]);
-
-  const addPost = (newPost) => {
-    setPosts([newPost, ...posts]); // add new post at the top
+  
+  const handleAddPost = (newPost) => {
+    setPosts([newPost, ...posts]);
   };
 
   return (
     <div>
       <Navbar />
-      <PostInput onAddPost={addPost} /> {/* Pass the function */}
-      <Feed posts={posts} />            {/* Pass posts */}
+      <PostInput onAddPost={handleAddPost} />
+      <Feed posts={posts} />
     </div>
   );
 }

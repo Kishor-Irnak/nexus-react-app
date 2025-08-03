@@ -1,4 +1,7 @@
 import { useRef, useState } from "react";
+import { db, storage } from "../firebase";
+import { collection, addDoc } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
 function PostInput({ onAddPost }) {
   const fileInputRef = useRef(null);
@@ -12,21 +15,38 @@ function PostInput({ onAddPost }) {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(URL.createObjectURL(file)); // create a preview URL
+      setSelectedFile(file); // store actual file
     }
   };
 
-  const handlePost = () => {
+  const handlePost = async () => {
     if (!title && !selectedFile) return;
 
-    onAddPost({
-      id: Date.now(),
+    let imageURL = "";
+    if (selectedFile) {
+      // 1. Upload image to Firebase Storage
+      const storageRef = ref(storage, `images/${Date.now()}_${selectedFile.name}`);
+      await uploadBytes(storageRef, selectedFile);
+      imageURL = await getDownloadURL(storageRef);
+    }
+
+    const newPost = {
       title,
-      image: selectedFile,
-      comments: []
+      image: imageURL,
+      comments: [],
+      createdAt: new Date(),
+    };
+
+    // 2. Save post to Firestore
+    await addDoc(collection(db, "posts"), newPost);
+
+    // 3. Update local feed immediately (optional)
+    onAddPost({
+      ...newPost,
+      id: Date.now(), // temporary local ID
     });
 
-    // Reset inputs
+    // Reset form
     setTitle("");
     setSelectedFile(null);
     fileInputRef.current.value = null;
@@ -36,7 +56,7 @@ function PostInput({ onAddPost }) {
     <div className="container d-flex justify-content-center">
       <div className="card m-4 p-3 w-100" style={{ maxWidth: "600px" }}>
         <div className="input-group mb-3">
-          <span className="input-group-text" id="addon-wrapping">@</span>
+          <span className="input-group-text">@</span>
           <input
             type="text"
             className="form-control"
@@ -62,14 +82,9 @@ function PostInput({ onAddPost }) {
               title="Attach file"
               onClick={handleAttachClick}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                   fill="currentColor" className="bi bi-paperclip" viewBox="0 0 16 16">
-                <path d="M4.5 3a2.5 2.5 0 0 1 5 0v9a1.5 1.5 0 0 1-3 0V5a.5.5 0 0 1 1 0v7a.5.5 0 0 0 1 0V3a1.5 1.5 0 1 0-3 0v9a2.5 2.5 0 0 0 5 0V5a.5.5 0 0 1 1 0v7a3.5 3.5 0 1 1-7 0z" />
-              </svg>
+              📎
             </button>
-            {selectedFile && (
-              <span className="text-muted small">Image selected</span>
-            )}
+            {selectedFile && <span className="text-muted small">{selectedFile.name}</span>}
           </div>
 
           <button className="btn btn-primary btn-sm" onClick={handlePost}>
