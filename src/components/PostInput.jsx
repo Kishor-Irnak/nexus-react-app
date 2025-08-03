@@ -1,12 +1,11 @@
 import { useRef, useState } from "react";
-import { db, storage } from "../firebase";
-import { collection, addDoc } from "firebase/firestore";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { fileDb } from "../services/fileDb"; // Changed from localDb to fileDb
 
 function PostInput({ onAddPost }) {
   const fileInputRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
   const [title, setTitle] = useState("");
+  const [isPosting, setIsPosting] = useState(false); // Added loading state
 
   const handleAttachClick = () => {
     fileInputRef.current.click();
@@ -15,41 +14,60 @@ function PostInput({ onAddPost }) {
   const handleFileChange = (event) => {
     const file = event.target.files[0];
     if (file) {
-      setSelectedFile(file); // store actual file
+      // Validate file type and size
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      setSelectedFile(file);
     }
   };
 
   const handlePost = async () => {
     if (!title && !selectedFile) return;
+    if (isPosting) return; // Prevent multiple submissions
 
-    let imageURL = "";
-    if (selectedFile) {
-      // 1. Upload image to Firebase Storage
-      const storageRef = ref(storage, `images/${Date.now()}_${selectedFile.name}`);
-      await uploadBytes(storageRef, selectedFile);
-      imageURL = await getDownloadURL(storageRef);
+    setIsPosting(true);
+    
+    try {
+      let imageURL = "";
+      if (selectedFile) {
+        // Convert image to base64 for storage
+        imageURL = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => resolve(e.target.result);
+          reader.onerror = (error) => reject(error);
+          reader.readAsDataURL(selectedFile);
+        });
+      }
+
+      const newPost = {
+        title,
+        image: imageURL,
+      };
+
+      // Save to file-based DB
+      const savedPost = await fileDb.addPost(newPost);
+      
+      // Update parent component
+      onAddPost(savedPost);
+
+      // Reset form
+      setTitle("");
+      setSelectedFile(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    } catch (error) {
+      console.error("Error creating post:", error);
+      alert("Failed to create post. Please try again.");
+    } finally {
+      setIsPosting(false);
     }
-
-    const newPost = {
-      title,
-      image: imageURL,
-      comments: [],
-      createdAt: new Date(),
-    };
-
-    // 2. Save post to Firestore
-    await addDoc(collection(db, "posts"), newPost);
-
-    // 3. Update local feed immediately (optional)
-    onAddPost({
-      ...newPost,
-      id: Date.now(), // temporary local ID
-    });
-
-    // Reset form
-    setTitle("");
-    setSelectedFile(null);
-    fileInputRef.current.value = null;
   };
 
   return (
@@ -63,6 +81,7 @@ function PostInput({ onAddPost }) {
             placeholder="What issue are you facing..."
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            disabled={isPosting}
           />
         </div>
 
@@ -72,6 +91,7 @@ function PostInput({ onAddPost }) {
           ref={fileInputRef}
           onChange={handleFileChange}
           style={{ display: "none" }}
+          disabled={isPosting}
         />
 
         <div className="d-flex justify-content-between align-items-center w-100">
@@ -81,14 +101,40 @@ function PostInput({ onAddPost }) {
               className="btn btn-light p-2"
               title="Attach file"
               onClick={handleAttachClick}
+              disabled={isPosting}
             >
               📎
             </button>
-            {selectedFile && <span className="text-muted small">{selectedFile.name}</span>}
+            {selectedFile && (
+              <span className="text-muted small">
+                {selectedFile.name}
+                <button 
+                  type="button" 
+                  className="btn-close ms-2" 
+                  style={{ fontSize: '0.5rem' }}
+                  onClick={() => {
+                    setSelectedFile(null);
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                  aria-label="Remove file"
+                />
+              </span>
+            )}
           </div>
 
-          <button className="btn btn-primary btn-sm" onClick={handlePost}>
-            Post Issue
+          <button 
+            className="btn btn-primary btn-sm" 
+            onClick={handlePost}
+            disabled={isPosting}
+          >
+            {isPosting ? (
+              <>
+                <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                Posting...
+              </>
+            ) : "Post Issue"}
           </button>
         </div>
       </div>

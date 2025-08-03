@@ -1,48 +1,41 @@
 import { useEffect, useState } from "react";
-import { collection, onSnapshot, orderBy, query } from "firebase/firestore";
-import { db } from "../firebase";
-import PostCard from "./PostCard"; // Ensure correct path
+import { fileDb } from "../services/fileDb"; // Changed from localDb to fileDb
+import PostCard from "./PostCard";
 
-function Feed({ posts = [] }) { // Default empty array for safety
-  const [firebasePosts, setFirebasePosts] = useState([]);
+function Feed({ posts = [] }) {
+  const [localPosts, setLocalPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    setLoading(true);
-    try {
-      const q = query(
-        collection(db, "posts"), 
-        orderBy("createdAt", "desc")
-      );
-      
-      const unsubscribe = onSnapshot(
-        q,
-        (snapshot) => {
-          const data = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-          setFirebasePosts(data);
-          setLoading(false);
-        },
-        (err) => {
-          console.error("Firestore error:", err);
-          setError(err);
-          setLoading(false);
-        }
-      );
+    const loadPosts = async () => {
+      setLoading(true);
+      try {
+        const loadedPosts = await fileDb.getPosts(); // Changed to fileDb
+        setLocalPosts(loadedPosts);
+        setLoading(false);
+      } catch (err) {
+        console.error("Error loading posts:", err);
+        setError(err);
+        setLoading(false);
+      }
+    };
 
-      return () => unsubscribe();
-    } catch (err) {
-      console.error("Setup error:", err);
-      setError(err);
-      setLoading(false);
-    }
+    loadPosts();
+
+    // Optional: Set up a listener for file changes (if using file watcher)
+    // Note: This is different from localStorage event listener
+    const intervalId = setInterval(() => {
+      loadPosts();
+    }, 5000); // Check for updates every 5 seconds
+
+    return () => {
+      clearInterval(intervalId);
+    };
   }, []);
 
   // Determine which posts to display
-  const displayPosts = firebasePosts.length > 0 ? firebasePosts : posts;
+  const displayPosts = localPosts.length > 0 ? localPosts : posts;
 
   if (loading) {
     return <div className="text-center py-4">Loading posts...</div>;
