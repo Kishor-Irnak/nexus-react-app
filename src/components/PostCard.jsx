@@ -14,8 +14,20 @@ function PostCard({ post }) {
     <div className="card m-3 p-3" style={{ maxWidth: "600px", width: "100%" }}>
       <h5>{post.title}</h5>
       {post.image && (
-        <img src={post.image} alt="post" className="img-fluid rounded mb-2" />
-      )}
+  <img
+    src={post.image}
+    alt="post"
+    className="rounded mb-2"
+    style={{
+      width: "100%",
+      maxHeight: "300px",    // limit height
+      objectFit: "contain",  // fit inside box, no cropping
+      borderRadius: "8px"
+    }}
+  />
+)}
+
+
 
       <div>
         <input
