@@ -3,8 +3,15 @@ function Navbar() {
     <nav className="navbar navbar-expand-lg bg-white shadow-sm sticky-top">
       <div className="container-fluid">
         {/* Brand */}
-        <a className="navbar-brand fw-bold fs-4 text-primary" href="#">
-          Nexus
+        <a className="navbar-brand d-flex align-items-center" href="#">
+          <img
+            src="./public/verify.png"  // place your logo file in the public folder
+            alt="Logo"
+            width="32"
+            height="32"
+            className="me-2"
+           />
+           <span className="fw-bold fs-4 text-dark">Nexus</span>
         </a>
 
         {/* Mobile menu button */}
@@ -51,45 +58,8 @@ function Navbar() {
                 <i className="bi bi-envelope fs-5"></i>
               </a>
             </li>
-            {/* Profile dropdown */}
-            <li className="nav-item dropdown">
-              <a
-                className="nav-link dropdown-toggle d-flex align-items-center"
-                href="#"
-                role="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-              >
-                <img
-                  src="https://via.placeholder.com/32"
-                  alt="profile"
-                  className="rounded-circle me-2"
-                  width="32"
-                  height="32"
-                />
-                <span className="d-none d-lg-inline">Profile</span>
-              </a>
-              <ul className="dropdown-menu dropdown-menu-end">
-                <li>
-                  <a className="dropdown-item" href="#">
-                    My Profile
-                  </a>
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#">
-                    Settings
-                  </a>
-                </li>
-                <li>
-                  <hr className="dropdown-divider" />
-                </li>
-                <li>
-                  <a className="dropdown-item" href="#">
-                    Logout
-                  </a>
-                </li>
-              </ul>
-            </li>
+     
+           
           </ul>
         </div>
       </div>

@@ -1,3 +1,4 @@
+import Feed from './components/Feed';
 import Navbar from './components/Navbar';
 import PostInput from './components/PostInput';
 
@@ -6,6 +7,7 @@ function App() {
     <div>
       <Navbar />
       <PostInput />
+      <Feed />
     </div>
   );
 }
