@@ -1,20 +1,20 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import Navbar from "./components/Navbar";
 import PostInput from "./components/PostInput";
 import PostCard from "./components/PostCard";
 
 function App() {
-  const [reload, setReload] = useState(false);
+  const [refresh, setRefresh] = useState(false);
 
-  const handlePost = () => {
-    setReload(!reload); // trigger re-render of PostCard
+  const handleNewPost = () => {
+    setRefresh((prev) => !prev); // trigger re-render
   };
 
   return (
     <div>
       <Navbar />
-      <PostInput onPost={handlePost} />
-      <PostCard />
+      <PostInput onPost={handleNewPost} />
+      <PostCard refresh={refresh} />
     </div>
   );
 }
